@@ -17,7 +17,10 @@ interface Row {
   confirm_count: number
 }
 
-export class StoreError extends Error {}
+export class StoreError extends Error {
+  /** The server's own message, shown small so problems can be diagnosed. */
+  constructor(code: string, public detail = '') { super(code) }
+}
 
 export function createSupabaseStore(url: string, anonKey: string): Store {
   const sb: SupabaseClient = createClient(url, anonKey)
@@ -31,7 +34,7 @@ export function createSupabaseStore(url: string, anonKey: string): Store {
       const { data } = await sb.auth.getSession()
       if (data.session) return data.session.user.id
       const { data: signed, error } = await sb.auth.signInAnonymously()
-      if (error || !signed.user) { userId = null; throw new StoreError('sign_in_failed') }
+      if (error || !signed.user) { userId = null; throw new StoreError('sign_in_failed', error?.message) }
       return signed.user.id
     })())
 
@@ -39,7 +42,7 @@ export function createSupabaseStore(url: string, anonKey: string): Store {
     const uid = await ensureUser()
     const path = `${uid}/${crypto.randomUUID()}.jpg`
     const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' })
-    if (error) throw new StoreError('upload_failed')
+    if (error) throw new StoreError('upload_failed', error.message)
     return path
   }
 
@@ -89,7 +92,7 @@ export function createSupabaseStore(url: string, anonKey: string): Store {
       const { error } = await sb.from('reports').insert({
         lat: n.lat, lng: n.lng, district: n.district, road: n.road, note: n.note || null, photo_path: path,
       })
-      if (error) throw new StoreError(error.message.includes('daily_limit') ? 'daily_limit' : 'insert_failed')
+      if (error) throw new StoreError(error.message.includes('daily_limit') ? 'daily_limit' : 'insert_failed', error.message)
       await refresh()
     },
     async confirm(id) {

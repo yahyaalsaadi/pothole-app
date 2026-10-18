@@ -39,7 +39,9 @@ export function ReportSheet({ store, onClose, onPosted }: { store: Store; onClos
       await store.add({ lat: +pin.lat.toFixed(6), lng: +pin.lng.toFixed(6), district, road, note: note.trim().slice(0, 200), photo })
       onPosted()
     } catch (e) {
-      setError((e as Error).message === 'daily_limit' ? t.dailyLimit : t.saveFailed)
+      const err = e as Error & { detail?: string }
+      if (err.message === 'daily_limit') setError(t.dailyLimit)
+      else setError(`${t.saveFailed} (${[err.message, err.detail].filter(Boolean).join(': ')})`)
       setBusy(false)
     }
   }
