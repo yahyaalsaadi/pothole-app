@@ -102,5 +102,11 @@ create policy "photos upload into own folder" on storage.objects
   for insert to authenticated
   with check (bucket_id = 'photos' and (storage.foldername(name))[1] = auth.uid()::text);
 
--- Live updates for the map.
-alter publication supabase_realtime add table public.reports;
+-- Live updates for the map (skipped if already added, so this file can be re-run).
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables
+                 where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'reports') then
+    alter publication supabase_realtime add table public.reports;
+  end if;
+end $$;
