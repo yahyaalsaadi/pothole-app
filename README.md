@@ -37,7 +37,7 @@ Run `npm run build` to produce a static site in `dist/`. Host it on Netlify, Ver
 
 ## Before a public launch
 
-- **Map tiles:** the app currently uses the free CARTO Voyager basemap, which is meant for light, non-commercial use. For a large launch, move to a paid tile plan by changing the tile URL in `src/components/MapView.tsx` to a provider such as MapTiler, Stadia or Protomaps.
+- **Map tiles:** the map uses [OpenFreeMap](https://openfreemap.org), which is free and needs no API key. For very heavy traffic, consider self-hosting tiles or a paid provider.
 - **District boundaries:** districts are matched to the nearest district centre (`src/districts.ts`). Replace this with official boundary polygons and confirm with Amanat Baghdad which municipality covers each area.
 - **Moderation:** add a small admin page for hiding reports and reviewing "fixed" claims.
 - **App stores:** wrap the same code with Capacitor for Android and iOS builds.

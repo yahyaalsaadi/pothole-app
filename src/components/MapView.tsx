@@ -5,22 +5,9 @@ import { BAGHDAD_CENTER } from '../districts'
 import { daysUnfixed, severity } from '../lib/days'
 import type { Report } from '../types'
 
-// CARTO Voyager basemap (OpenStreetMap data): free for low-traffic,
-// non-commercial use. Before a large launch, move to a paid tile plan
-// (CARTO, MapTiler, Stadia) or self-hosted Protomaps.
-const STYLE: maplibregl.StyleSpecification = {
-  version: 8,
-  sources: {
-    osm: {
-      type: 'raster',
-      tiles: ['a', 'b', 'c', 'd'].map((sd) => `https://${sd}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png`),
-      tileSize: 256,
-      maxzoom: 20,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
-    },
-  },
-  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
-}
+// OpenFreeMap (OpenStreetMap data): free, no API key, no usage limits.
+// https://openfreemap.org
+const STYLE = 'https://tiles.openfreemap.org/styles/liberty'
 
 interface Props {
   reports?: Report[]
