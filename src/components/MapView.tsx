@@ -4,6 +4,12 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { BAGHDAD_CENTER } from '../districts'
 import { daysUnfixed, severity } from '../lib/days'
 import type { Report } from '../types'
+// Shapes Arabic street names correctly (joined letters, right-to-left).
+import rtlTextUrl from '../../node_modules/@mapbox/mapbox-gl-rtl-text/dist/mapbox-gl-rtl-text.js?url'
+
+if (maplibregl.getRTLTextPluginStatus() === 'unavailable') {
+  maplibregl.setRTLTextPlugin(rtlTextUrl, false).catch(() => {})
+}
 
 // OpenFreeMap (OpenStreetMap data): free, no API key, no usage limits.
 // https://openfreemap.org
