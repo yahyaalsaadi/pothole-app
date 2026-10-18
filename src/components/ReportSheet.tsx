@@ -64,10 +64,10 @@ export function ReportSheet({ store, onClose, onPosted }: { store: Store; onClos
         <span className="lbl">{t.where}</span>
         <div className="row-between">
           <span className="hint">{t.whereHint}</span>
-          <button type="button" className="ghost small" onClick={locate}>{t.useMyLocation}</button>
+          <button type="button" className="chip chip-action" onClick={locate}>{t.useMyLocation}</button>
         </div>
         {gpsMsg && <p className="hint">{gpsMsg}</p>}
-        <MapView className="map mini" pin={pin} onPick={(lat, lng) => setPin({ lat, lng })} />
+        <MapView className="map-mini" pin={pin} onPick={(lat, lng) => setPin({ lat, lng })} />
         <span className="hint">{t.district}: <b>{district ? i.districtName(district) : '—'}</b></span>
       </div>
 
@@ -93,7 +93,7 @@ export function ReportSheet({ store, onClose, onPosted }: { store: Store; onClos
       </div>
 
       {error && <p className="err" role="alert">{error}</p>}
-      <button type="button" className="primary" disabled={busy || !photo || !pin} onClick={submit}>
+      <button type="button" className="btn btn-primary btn-block" disabled={busy || !photo || !pin} onClick={submit}>
         {busy ? t.posting : t.post}
       </button>
     </Sheet>

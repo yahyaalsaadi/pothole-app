@@ -16,6 +16,7 @@ export function DetailSheet({ report: r, store, onClose, toast }: { report: Repo
 
   const n = daysUnfixed(r)
   const fixed = r.status === 'fixed'
+  const sev = severity(r)
   const dn = i.districtName(r.district)
   const body = i.responsibleBody(r)
   const text = t.shareText(dn, i.num(n), body)
@@ -25,6 +26,10 @@ export function DetailSheet({ report: r, store, onClose, toast }: { report: Repo
     setBusy(true)
     try { await fn() } catch { toast(t.saveFailed) } finally { setBusy(false) }
   }
+  const share = () => run(async () => {
+    const blob = await renderShareCard(r, i)
+    await shareOrDownload(blob, `pothole-${r.district}-${n}-days.jpg`, text)
+  })
 
   return (
     <Sheet title={dn} onClose={onClose}>
@@ -34,68 +39,65 @@ export function DetailSheet({ report: r, store, onClose, toast }: { report: Repo
           <figure><img src={r.fixedPhotoUrl} alt="" /><figcaption>{t.after}</figcaption></figure>
         </div>
       ) : (
-        <img className="hero-photo" src={r.photoUrl} alt="" />
-      )}
-
-      {fixed ? (
-        <div className="counter">
-          <span className="chip fixed">✓ {t.legendFixed}</span>
-          <span>{t.fixedAfter} {i.num(n)} {t.days}</span>
-        </div>
-      ) : (
-        <div className="counter">
-          <b className={`sev-${severity(r)}`}>{i.num(n)}</b>
-          <span>{n === 1 && i.lang === 'en' ? t.dayUnfixed : t.daysUnfixed}</span>
+        <div className={`photo-hero sev-bg-${sev}`}>
+          <img src={r.photoUrl} alt="" />
+          <div className="photo-badge">
+            {fixed ? (
+              <><b>✓</b><span>{t.fixedAfter} {i.num(n)} {t.days}</span></>
+            ) : (
+              <><b>{i.num(n)}</b><span>{n === 1 && i.lang === 'en' ? t.dayUnfixed : t.daysUnfixed}</span></>
+            )}
+          </div>
         </div>
       )}
 
-      <dl className="meta">
-        <dt>{t.district}</dt><dd>{dn}</dd>
-        <dt>{t.responsible}</dt><dd>{body}</dd>
-        {r.note && (<><dt>{t.note}</dt><dd>{r.note}</dd></>)}
-        <dt>{t.reported}</dt><dd>{i.date(r.createdAt)}</dd>
-        {fixed && r.fixedBy && (<><dt>{t.fixedCredit}</dt><dd>{r.fixedBy}</dd></>)}
-      </dl>
+      <div className="owner">
+        <span className="owner-label">{fixed && r.fixedBy ? t.fixedCredit : t.responsible}</span>
+        <span className="owner-name">{fixed && r.fixedBy ? r.fixedBy : body}</span>
+      </div>
 
-      {!fixed && (
-        <div className="btns center">
-          <button type="button" className="ghost" disabled={busy || r.confirmedByMe} onClick={() => run(() => store.confirm(r.id))}>
-            {r.confirmedByMe ? t.confirmed : t.confirm}
+      {r.note && <p className="note">{r.note}</p>}
+      <p className="meta-line">
+        {t.reported} {i.date(r.createdAt)}
+        {!fixed && <> · {i.num(r.confirmCount)} {t.confirmations}</>}
+      </p>
+
+      <div className="actions">
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={share}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 13v7h14v-7" /></svg>
+          {t.shareNow}
+        </button>
+        {!fixed && (
+          <button type="button" className="btn btn-secondary" disabled={busy || r.confirmedByMe} onClick={() => run(() => store.confirm(r.id))}>
+            {r.confirmedByMe ? `✓ ${t.confirmed}` : t.confirm}
           </button>
-          <span className="hint">{i.num(r.confirmCount)} {t.confirmations}</span>
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className="box">
-        <span className="lbl">{t.share}</span>
-        <span className="hint">{t.shareHint}</span>
-        <div className="btns">
-          <button type="button" disabled={busy} onClick={() => run(async () => {
-            const blob = await renderShareCard(r, i)
-            await shareOrDownload(blob, `pothole-${r.district}-${n}-days.jpg`, text)
-          })}>{t.saveImage}</button>
-          <button type="button" onClick={() => navigator.clipboard.writeText(text).then(() => setCopied(true), () => toast(text))}>
-            {copied ? t.copied : t.copyText}
-          </button>
-          <a href={`https://wa.me/?text=${enc}`} target="_blank" rel="noopener">WhatsApp</a>
-          <a href={`https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${enc}`} target="_blank" rel="noopener">Telegram</a>
-          <a href={`https://twitter.com/intent/tweet?text=${enc}`} target="_blank" rel="noopener">X</a>
-        </div>
+      <div className="share-row" aria-label={t.more}>
+        <a className="chip" href={`https://wa.me/?text=${enc}`} target="_blank" rel="noopener">WhatsApp</a>
+        <a className="chip" href={`https://t.me/share/url?url=${encodeURIComponent(location.href)}&text=${enc}`} target="_blank" rel="noopener">Telegram</a>
+        <a className="chip" href={`https://twitter.com/intent/tweet?text=${enc}`} target="_blank" rel="noopener">X</a>
+        <button type="button" className="chip" onClick={() => navigator.clipboard.writeText(text).then(() => setCopied(true), () => toast(text))}>
+          {copied ? t.copied : t.copyText}
+        </button>
       </div>
 
       {!fixed && (
-        <details className="box">
-          <summary className="lbl">{t.fixedQ}</summary>
-          <span className="hint">{t.fixedHint}</span>
-          <span className="lbl">{t.afterPhoto}</span>
-          <PhotoPicker onPick={(p) => setAfter(p)} onError={toast} />
-          <label className="lbl" htmlFor="fixedby">{t.fixedBy}</label>
-          <input id="fixedby" type="text" maxLength={80} placeholder={t.fixedByPlaceholder} value={fixedBy} onChange={(e) => setFixedBy(e.target.value)} />
-          <button type="button" className="primary" disabled={busy} onClick={() => run(async () => {
-            await store.markFixed(r.id, after, fixedBy.trim())
-            toast(`✓ ${t.legendFixed}`)
-            onClose()
-          })}>{t.markFixed}</button>
+        <details className="fix-box">
+          <summary>{t.fixedQ}</summary>
+          <div className="fix-body">
+            <span className="hint">{t.fixedHint}</span>
+            <span className="lbl">{t.afterPhoto}</span>
+            <PhotoPicker onPick={(p) => setAfter(p)} onError={toast} />
+            <label className="lbl" htmlFor="fixedby">{t.fixedBy}</label>
+            <input id="fixedby" type="text" maxLength={80} placeholder={t.fixedByPlaceholder} value={fixedBy} onChange={(e) => setFixedBy(e.target.value)} />
+            <button type="button" className="btn btn-fixed" disabled={busy} onClick={() => run(async () => {
+              await store.markFixed(r.id, after, fixedBy.trim())
+              toast(`✓ ${t.legendFixed}`)
+              onClose()
+            })}>{t.markFixed}</button>
+          </div>
         </details>
       )}
     </Sheet>

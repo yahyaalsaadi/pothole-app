@@ -42,6 +42,7 @@ const en = {
   shareText: (d: string, n: string, body: string) =>
     `This pothole in ${d}, Baghdad has gone ${n} days without repair. Responsible: ${body}. #BaghdadPotholes`,
   switchLang: 'عربي',
+  avgShort: 'avg. days open', showList: 'Worst streets', demoShort: 'Demo mode', shareNow: 'Share', more: 'More ways to share',
 }
 
 type Strings = typeof en
@@ -83,6 +84,7 @@ const ar: Strings = {
   streetBody: (m) => `أمانة بغداد، بلدية ${m}`,
   shareText: (d, n, body) => `هذه الحفرة في ${d} ببغداد بلا تصليح منذ ${n} يوماً. الجهة المسؤولة: ${body}. #حفر_بغداد`,
   switchLang: 'English',
+  avgShort: 'متوسط الأيام', showList: 'أسوأ الشوارع', demoShort: 'وضع تجريبي', shareNow: 'شارك', more: 'طرق أخرى للمشاركة',
 }
 
 export const STRINGS: Record<Lang, Strings> = { en, ar }

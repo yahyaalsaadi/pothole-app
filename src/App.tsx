@@ -3,6 +3,7 @@ import { DetailSheet } from './components/DetailSheet'
 import { Leaderboard } from './components/Leaderboard'
 import { MapView } from './components/MapView'
 import { ReportSheet } from './components/ReportSheet'
+import { Sheet } from './components/Sheet'
 import { store } from './data'
 import { I18nContext, makeI18n, type Lang } from './i18n'
 import { daysUnfixed } from './lib/days'
@@ -21,7 +22,7 @@ export function App() {
   const i = useMemo(() => makeI18n(lang), [lang])
   const { t } = i
   const [reports, setReports] = useState<Report[]>([])
-  const [tab, setTab] = useState<'map' | 'list'>('map')
+  const [listOpen, setListOpen] = useState(false)
   const [reporting, setReporting] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
@@ -39,54 +40,57 @@ export function App() {
     return () => clearTimeout(id)
   }, [toastMsg])
 
-  const select = useCallback((id: string) => setSelected(id), [])
+  const select = useCallback((id: string) => { setListOpen(false); setSelected(id) }, [])
   const open = reports.filter((r) => r.status === 'open')
   const avg = open.length ? Math.round(open.reduce((s, r) => s + daysUnfixed(r), 0) / open.length) : 0
   const current = reports.find((r) => r.id === selected)
 
   return (
     <I18nContext.Provider value={i}>
-      <div className="wrap">
-        <header>
+      <div className="app">
+        <MapView className="map-full" reports={reports} onSelect={select} />
+
+        <header className="topbar">
           <div className="brand">
-            <div className="mark" aria-hidden="true"><i /></div>
-            <div><h1>{t.title}</h1><p className="sub">{t.tagline}</p></div>
+            <span className="mark" aria-hidden="true"><i /></span>
+            <span className="brand-text">
+              <h1>{t.title}</h1>
+            </span>
           </div>
           <button type="button" className="lang" onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}>{t.switchLang}</button>
         </header>
-        <div className="stripe" aria-hidden="true" />
-        {!store.shared && <p className="demo">{t.demo}</p>}
 
-        <div className="stats">
-          <div className="stat"><b>{i.num(open.length)}</b><span>{t.statOpen}</span></div>
-          <div className="stat"><b>{i.num(avg)}</b><span>{t.statDays}</span></div>
-          <div className="stat"><b>{i.num(reports.length - open.length)}</b><span>{t.statFixed}</span></div>
+        <div className="statbar" aria-live="polite">
+          {!store.shared && <span className="stat demo-chip" title={t.demo}>{t.demoShort}</span>}
+          <span className="stat"><b>{i.num(open.length)}</b> {t.statOpen}</span>
+          <span className="stat"><b>{i.num(avg)}</b> {t.avgShort}</span>
+          <span className="stat"><i className="dot sev-fixed" /><b>{i.num(reports.length - open.length)}</b> {t.statFixed}</span>
         </div>
 
-        <div className="tabs" role="tablist">
-          <button role="tab" aria-selected={tab === 'map'} onClick={() => setTab('map')}>{t.tabMap}</button>
-          <button role="tab" aria-selected={tab === 'list'} onClick={() => setTab('list')}>{t.tabList}</button>
-        </div>
-
-        <section className="stack" hidden={tab !== 'map'}>
-          <MapView reports={reports} onSelect={select} />
-          <div className="legend">
-            <span><i className="dot sev-fresh" />{t.legendFresh}</span>
-            <span><i className="dot sev-old" />{t.legendOld}</span>
-            <span><i className="dot sev-ancient" />{t.legendAncient}</span>
-            <span><i className="dot sev-fixed" />{t.legendFixed}</span>
+        {reports.length === 0 && (
+          <div className="empty-card">
+            <h3>{t.emptyTitle}</h3>
+            <p>{t.emptyBody}</p>
           </div>
-          {reports.length === 0 && (
-            <div className="empty"><h3>{t.emptyTitle}</h3><p>{t.emptyBody}</p></div>
-          )}
-        </section>
-        {tab === 'list' && <Leaderboard reports={reports} onSelect={select} />}
+        )}
+
+        <div className="dock">
+          <button type="button" className="dock-list" onClick={() => setListOpen(true)} aria-label={t.showList}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h6" /></svg>
+            <span>{t.showList}</span>
+          </button>
+          <button type="button" className="dock-report" onClick={() => setReporting(true)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg>
+            <span>{t.report}</span>
+          </button>
+        </div>
       </div>
 
-      <button type="button" className="fab" onClick={() => setReporting(true)}>
-        <span aria-hidden="true">＋</span>{t.report}
-      </button>
-
+      {listOpen && (
+        <Sheet title={t.showList} onClose={() => setListOpen(false)}>
+          <Leaderboard reports={reports} onSelect={select} />
+        </Sheet>
+      )}
       {reporting && (
         <ReportSheet store={store} onClose={() => setReporting(false)} onPosted={() => { setReporting(false); setToastMsg(t.posted) }} />
       )}
